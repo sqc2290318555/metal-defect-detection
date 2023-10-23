@@ -84,25 +84,32 @@ def identity_block(input_tensor, kernel_size, filters, stage, block,
         block: 'a','b'..., current block label, used for generating layer names
     """
     nb_filter1, nb_filter2, nb_filter3 = filters
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
+    conv_name_base = f'res{str(stage)}{block}_branch'
+    bn_name_base = f'bn{str(stage)}{block}_branch'
 
-    x = KL.Conv2D(nb_filter1, (1, 1), name=conv_name_base + '2a',
-                  use_bias=use_bias)(input_tensor)
-    x = BatchNorm(axis=3, name=bn_name_base + '2a')(x)
+    x = KL.Conv2D(
+        nb_filter1, (1, 1), name=f'{conv_name_base}2a', use_bias=use_bias
+    )(input_tensor)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2a')(x)
     x = KL.Activation('relu')(x)
 
-    x = KL.Conv2D(nb_filter2, (kernel_size, kernel_size), padding='same',
-                  name=conv_name_base + '2b', use_bias=use_bias)(x)
-    x = BatchNorm(axis=3, name=bn_name_base + '2b')(x)
+    x = KL.Conv2D(
+        nb_filter2,
+        (kernel_size, kernel_size),
+        padding='same',
+        name=f'{conv_name_base}2b',
+        use_bias=use_bias,
+    )(x)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2b')(x)
     x = KL.Activation('relu')(x)
 
-    x = KL.Conv2D(nb_filter3, (1, 1), name=conv_name_base + '2c',
-                  use_bias=use_bias)(x)
-    x = BatchNorm(axis=3, name=bn_name_base + '2c')(x)
+    x = KL.Conv2D(
+        nb_filter3, (1, 1), name=f'{conv_name_base}2c', use_bias=use_bias
+    )(x)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2c')(x)
 
     x = KL.Add()([x, input_tensor])
-    x = KL.Activation('relu', name='res' + str(stage) + block + '_out')(x)
+    x = KL.Activation('relu', name=f'res{str(stage)}{block}_out')(x)
     return x
 
 
@@ -119,29 +126,44 @@ def conv_block(input_tensor, kernel_size, filters, stage, block,
     And the shortcut should have subsample=(2,2) as well
     """
     nb_filter1, nb_filter2, nb_filter3 = filters
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
+    conv_name_base = f'res{str(stage)}{block}_branch'
+    bn_name_base = f'bn{str(stage)}{block}_branch'
 
-    x = KL.Conv2D(nb_filter1, (1, 1), strides=strides,
-                  name=conv_name_base + '2a', use_bias=use_bias)(input_tensor)
-    x = BatchNorm(axis=3, name=bn_name_base + '2a')(x)
+    x = KL.Conv2D(
+        nb_filter1,
+        (1, 1),
+        strides=strides,
+        name=f'{conv_name_base}2a',
+        use_bias=use_bias,
+    )(input_tensor)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2a')(x)
     x = KL.Activation('relu')(x)
 
-    x = KL.Conv2D(nb_filter2, (kernel_size, kernel_size), padding='same',
-                  name=conv_name_base + '2b', use_bias=use_bias)(x)
-    x = BatchNorm(axis=3, name=bn_name_base + '2b')(x)
+    x = KL.Conv2D(
+        nb_filter2,
+        (kernel_size, kernel_size),
+        padding='same',
+        name=f'{conv_name_base}2b',
+        use_bias=use_bias,
+    )(x)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2b')(x)
     x = KL.Activation('relu')(x)
 
     x = KL.Conv2D(nb_filter3, (1, 1), name=conv_name_base +
                   '2c', use_bias=use_bias)(x)
-    x = BatchNorm(axis=3, name=bn_name_base + '2c')(x)
+    x = BatchNorm(axis=3, name=f'{bn_name_base}2c')(x)
 
-    shortcut = KL.Conv2D(nb_filter3, (1, 1), strides=strides,
-                         name=conv_name_base + '1', use_bias=use_bias)(input_tensor)
-    shortcut = BatchNorm(axis=3, name=bn_name_base + '1')(shortcut)
+    shortcut = KL.Conv2D(
+        nb_filter3,
+        (1, 1),
+        strides=strides,
+        name=f'{conv_name_base}1',
+        use_bias=use_bias,
+    )(input_tensor)
+    shortcut = BatchNorm(axis=3, name=f'{bn_name_base}1')(shortcut)
 
     x = KL.Add()([x, shortcut])
-    x = KL.Activation('relu', name='res' + str(stage) + block + '_out')(x)
+    x = KL.Activation('relu', name=f'res{str(stage)}{block}_out')(x)
     return x
 
 
@@ -202,8 +224,7 @@ def apply_box_deltas_graph(boxes, deltas):
     x1 = center_x - 0.5 * width
     y2 = y1 + height
     x2 = x1 + width
-    result = tf.stack([y1, x1, y2, x2], axis=1, name="apply_box_deltas_out")
-    return result
+    return tf.stack([y1, x1, y2, x2], axis=1, name="apply_box_deltas_out")
 
 
 def clip_boxes_graph(boxes, window):
@@ -453,8 +474,7 @@ def overlaps_graph(boxes1, boxes2):
     union = b1_area + b2_area - intersection
     # 4. Compute IoU and reshape to [boxes1, boxes2]
     iou = intersection / union
-    overlaps = tf.reshape(iou, [tf.shape(boxes1)[0], tf.shape(boxes2)[0]])
-    return overlaps
+    return tf.reshape(iou, [tf.shape(boxes1)[0], tf.shape(boxes2)[0]])
 
 
 def detection_targets_graph(proposals, gt_class_ids, gt_boxes, gt_masks, config):
@@ -631,12 +651,12 @@ class DetectionTargetLayer(KE.Layer):
         # Slice the batch and run a graph for each slice
         # TODO: Rename target_bbox to target_deltas for clarity
         names = ["rois", "target_class_ids", "target_bbox", "target_mask"]
-        outputs = utils.batch_slice(
+        return utils.batch_slice(
             [proposals, gt_class_ids, gt_boxes, gt_masks],
-            lambda w, x, y, z: detection_targets_graph(
-                w, x, y, z, self.config),
-            self.config.IMAGES_PER_GPU, names=names)
-        return outputs
+            lambda w, x, y, z: detection_targets_graph(w, x, y, z, self.config),
+            self.config.IMAGES_PER_GPU,
+            names=names,
+        )
 
     def compute_output_shape(self, input_shape):
         return [
@@ -994,8 +1014,7 @@ def smooth_l1_loss(y_true, y_pred):
     """
     diff = K.abs(y_true - y_pred)
     less_than_one = K.cast(K.less(diff, 1.0), "float32")
-    loss = (less_than_one * 0.5 * diff**2) + (1 - less_than_one) * (diff - 0.5)
-    return loss
+    return (less_than_one * 0.5 * diff**2) + (1 - less_than_one) * (diff - 0.5)
 
 
 def rpn_class_loss_graph(rpn_match, rpn_class_logits):
@@ -1246,12 +1265,11 @@ def build_detection_targets(rpn_rois, gt_class_ids, gt_boxes, gt_masks, config):
            to bbox boundaries and resized to neural network output size.
     """
     assert rpn_rois.shape[0] > 0
-    assert gt_class_ids.dtype == np.int32, "Expected int but got {}".format(
-        gt_class_ids.dtype)
-    assert gt_boxes.dtype == np.int32, "Expected int but got {}".format(
-        gt_boxes.dtype)
-    assert gt_masks.dtype == np.bool_, "Expected bool but got {}".format(
-        gt_masks.dtype)
+    assert (
+        gt_class_ids.dtype == np.int32
+    ), f"Expected int but got {gt_class_ids.dtype}"
+    assert gt_boxes.dtype == np.int32, f"Expected int but got {gt_boxes.dtype}"
+    assert gt_masks.dtype == np.bool_, f"Expected bool but got {gt_masks.dtype}"
 
     # It's common to add GT Boxes to ROIs but we don't do that here because
     # according to XinLei Chen's paper, it doesn't help.
@@ -1327,9 +1345,9 @@ def build_detection_targets(rpn_rois, gt_class_ids, gt_boxes, gt_masks, config):
             keep_extra_ids = np.random.choice(
                 keep_bg_ids, remaining, replace=True)
             keep = np.concatenate([keep, keep_extra_ids])
-    assert keep.shape[0] == config.TRAIN_ROIS_PER_IMAGE, \
-        "keep doesn't match ROI batch size {}, {}".format(
-            keep.shape[0], config.TRAIN_ROIS_PER_IMAGE)
+    assert (
+        keep.shape[0] == config.TRAIN_ROIS_PER_IMAGE
+    ), f"keep doesn't match ROI batch size {keep.shape[0]}, {config.TRAIN_ROIS_PER_IMAGE}"
 
     # Reset the gt boxes assigned to BG ROIs.
     rpn_roi_gt_boxes[keep_bg_ids, :] = 0
@@ -1462,9 +1480,8 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
     # For positive anchors, compute shift and scale needed to transform them
     # to match the corresponding GT boxes.
     ids = np.where(rpn_match == 1)[0]
-    ix = 0  # index into rpn_bbox
     # TODO: use box_refinement() rather than duplicating the code here
-    for i, a in zip(ids, anchors[ids]):
+    for ix, (i, a) in enumerate(zip(ids, anchors[ids])):
         # Closest gt box (it might have IoU < 0.7)
         gt = gt_boxes[anchor_iou_argmax[i]]
 
@@ -1489,8 +1506,6 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
         ]
         # Normalize
         rpn_bbox[ix] /= config.RPN_BBOX_STD_DEV
-        ix += 1
-
     return rpn_match, rpn_bbox
 
 
@@ -1520,14 +1535,14 @@ def generate_random_rois(image_shape, count, gt_class_ids, gt_boxes):
         r_x1 = max(gt_x1 - w, 0)
         r_x2 = min(gt_x2 + w, image_shape[1])
 
+        # Filter out zero area boxes
+        threshold = 1
         # To avoid generating boxes with zero area, we generate double what
         # we need and filter out the extra. If we get fewer valid boxes
         # than we need, we loop and try again.
         while True:
             y1y2 = np.random.randint(r_y1, r_y2, (rois_per_box * 2, 2))
             x1x2 = np.random.randint(r_x1, r_x2, (rois_per_box * 2, 2))
-            # Filter out zero area boxes
-            threshold = 1
             y1y2 = y1y2[np.abs(y1y2[:, 0] - y1y2[:, 1]) >=
                         threshold][:rois_per_box]
             x1x2 = x1x2[np.abs(x1x2[:, 0] - x1x2[:, 1]) >=
@@ -1544,14 +1559,14 @@ def generate_random_rois(image_shape, count, gt_class_ids, gt_boxes):
 
     # Generate random ROIs anywhere in the image (10% of count)
     remaining_count = count - (rois_per_box * gt_boxes.shape[0])
+    # Filter out zero area boxes
+    threshold = 1
     # To avoid generating boxes with zero area, we generate double what
     # we need and filter out the extra. If we get fewer valid boxes
     # than we need, we loop and try again.
     while True:
         y1y2 = np.random.randint(0, image_shape[0], (remaining_count * 2, 2))
         x1x2 = np.random.randint(0, image_shape[1], (remaining_count * 2, 2))
-        # Filter out zero area boxes
-        threshold = 1
         y1y2 = y1y2[np.abs(y1y2[:, 0] - y1y2[:, 1]) >=
                     threshold][:remaining_count]
         x1x2 = x1x2[np.abs(x1x2[:, 0] - x1x2[:, 1]) >=
@@ -1732,8 +1747,7 @@ def data_generator(dataset, config, shuffle=True, augment=True, random_rois=0,
             raise
         except:
             # Log it and skip the image
-            logging.exception("Error processing image {}".format(
-                dataset.image_info[image_id]))
+            logging.exception(f"Error processing image {dataset.image_info[image_id]}")
             error_count += 1
             if error_count > 5:
                 raise

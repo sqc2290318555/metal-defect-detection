@@ -163,14 +163,14 @@ class XrayDataset(utils.Dataset):
         castings_metadata = "metadata/gdxray/castings_{0}.txt".format(subset)
         welds_metadata = "metadata/gdxray/welds_{0}.txt".format(subset)
 
-        if series=="Castings":
+        if series == "All":
+            metadata = [castings_metadata, welds_metadata]
+
+        elif series == "Castings":
             metadata = [castings_metadata]
 
-        if series=="Welds":
+        elif series == "Welds":
             metadata = [welds_metadata]
-
-        if series=="All":
-            metadata = [castings_metadata, welds_metadata]
 
         image_ids = []
         for metadata_path in metadata:
@@ -289,20 +289,11 @@ class XrayDataset(utils.Dataset):
 
         for i in range(100):
             path = self.get_mask_path(dataset_dir, image_id, i)
-            if os.path.exists(path):
-                mask = scipy.ndimage.imread(path)
-                mask = mask.astype(np.bool)
-                masks.append(mask)
-                # Debugging
-                #import matplotlib.pyplot as plt
-                #image = scipy.ndimage.imread(info["path"])
-                #plt.figure()
-                #plt.imshow(image)
-                #plt.figure()
-                #plt.imshow(mask)
-                #plt.show()
-            else:
+            if not os.path.exists(path):
                 break
+            mask = scipy.ndimage.imread(path)
+            mask = mask.astype(np.bool)
+            masks.append(mask)
         mask = np.stack(masks,axis=-1)
 
         # Get defect type
@@ -330,7 +321,7 @@ class XrayDataset(utils.Dataset):
         """Return a link to the image in the COCO Website."""
         info = self.image_info[image_id]
         if info["source"] == "coco":
-            return "http://cocodataset.org/#explore?id={}".format(info["id"])
+            return f'http://cocodataset.org/#explore?id={info["id"]}'
         else:
             super().image_reference(image_id)
 
@@ -341,11 +332,7 @@ class XrayDataset(utils.Dataset):
         dataset_dir: The directory to place the dataset
         series: The series to download "Castings, Welds, Both"
         """
-        if series=="All":
-            all_series = ["Castings","Welding"]
-        else:
-            all_series = [series]
-
+        all_series = ["Castings","Welding"] if series=="All" else [series]
         for series in all_series:
             url = DATASETS[series]
 
@@ -358,11 +345,11 @@ class XrayDataset(utils.Dataset):
 
             # Download images if not available locally
             if not os.path.exists(series_dir):
-                print("Downloading images to " + zip_file + " ...")
+                print(f"Downloading images to {zip_file} ...")
                 with urllib.request.urlopen(url) as response, open(zip_file, 'wb') as out:
                     shutil.copyfileobj(response, out)
                 print("... done downloading.")
-                print("Unzipping " + zip_file + "...")
+                print(f"Unzipping {zip_file}...")
                 with zipfile.ZipFile(zip_file, "r") as zip_ref:
                     zip_ref.extractall(dataset_dir)
                 print("... done unzipping")
@@ -476,10 +463,7 @@ if __name__ == '__main__':
     args.dataset = os.path.expanduser(args.dataset)
 
     # Configurations
-    if args.command == "train":
-        config = TrainConfig()
-    else:
-        config = InferenceConfig()
+    config = TrainConfig() if args.command == "train" else InferenceConfig()
     config.display()
 
     # Create model
@@ -550,9 +534,8 @@ if __name__ == '__main__':
         dataset_val = XrayDataset()
         dataset_val.load_gdxray(args.dataset, "test", series=args.series, auto_download=args.download)
         dataset_val.prepare()
-        print("Running GDXray evaluation on {} images.".format(args.limit))
+        print(f"Running GDXray evaluation on {args.limit} images.")
         average_precision = evaluate_gdxray(model, dataset_val, limit=args.limit)
-        print("Got AP={} using {} images.".format(average_precision, args.limit))
+        print(f"Got AP={average_precision} using {args.limit} images.")
     else:
-        print("'{}' is not recognized. "
-              "Use 'train' or 'evaluate'".format(args.command))
+        print(f"'{args.command}' is not recognized. Use 'train' or 'evaluate'")

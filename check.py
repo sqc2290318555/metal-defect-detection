@@ -44,8 +44,8 @@ elif config.NAME == "gdxray":
 # Must call before using the dataset
 dataset.prepare()
 
-print("Image Count: {}".format(len(dataset.image_ids)))
-print("Class Count: {}".format(dataset.num_classes))
+print(f"Image Count: {len(dataset.image_ids)}")
+print(f"Class Count: {dataset.num_classes}")
 for i, info in enumerate(dataset.class_info):
     print("{:3}. {:50}".format(i, info['name']))
 

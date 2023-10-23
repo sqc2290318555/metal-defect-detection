@@ -39,7 +39,7 @@ def crop(infile,width):
 
 def crop_images_in_directory(image_dir):
 	"""Horizontally crop all the images in a directory"""
-	pattern = image_dir+"/*.png"
+	pattern = f"{image_dir}/*.png"
 	print("Searching for files with pattern",pattern)
 	for infile in glob.glob(pattern):
 		for i,cropped in enumerate(crop(infile,768)):
@@ -52,7 +52,7 @@ def crop_images_in_directory(image_dir):
 
 def rename_images_in_directory(image_dir, template):
 	"""Rename all the images in a directory according to template"""
-	pattern = image_dir+"/*.png"
+	pattern = f"{image_dir}/*.png"
 	print("Searching for files with pattern",pattern)
 
 	for i,infile in enumerate(sorted(glob.glob(pattern))):
@@ -67,7 +67,7 @@ def rename_images_in_directory(image_dir, template):
 def build_mask_file(mask_path, mask_dir_out):
 	"""Generate masks using the images in mask_dir_in"""
 	if not os.path.exists(mask_path):
-		raise Exception("No such path: "+mask_path)
+		raise Exception(f"No such path: {mask_path}")
 
 	im = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 	ret, thresh = cv2.threshold(im, 127, 255, 0)
@@ -86,7 +86,7 @@ def build_mask_file(mask_path, mask_dir_out):
 def generate_metadata(dataset_dir, image_dir):
 	"""Generate a metadata file to describe this dataset"""
 	with open("metadata.txt","w") as metadata:
-		for image in sorted(glob.glob(image_dir+"/*.png")):
+		for image in sorted(glob.glob(f"{image_dir}/*.png")):
 			relpath = os.path.relpath(image, dataset_dir)
 			print("Adding metadata",relpath)
 			metadata.write(relpath+os.linesep)
@@ -95,7 +95,7 @@ def generate_metadata(dataset_dir, image_dir):
 def weld_segmentation(path):
 	# cv2 is does not throw an error if the path is wrong
 	if not os.path.exists(path):
-		raise Exception("No such path: "+path)
+		raise Exception(f"No such path: {path}")
 
 	# Read image
 	im = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
@@ -149,7 +149,7 @@ def prepare_welding():
 	# Copy masks over to the correct directory
 	new_mask_dir = os.path.join(image_dir,"masks")
 	os.mkdir(new_mask_dir)
-	for mask_file in glob.glob(masks_dir+"/*.png"):
+	for mask_file in glob.glob(f"{masks_dir}/*.png"):
 		build_mask_file(mask_file, new_mask_dir)
 
 	# Generate a metadata file
